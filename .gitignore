@@ -3,8 +3,5 @@
 /page 105-122 (slides)
 /page 124 - 154 (bills and tables)
 /research paper
-/datasets
-test.json
-train.json
-val.json
+/datasets/DocLayNet/images
 .DS_Store

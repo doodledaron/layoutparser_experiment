@@ -7,3 +7,4 @@
 test.json
 train.json
 val.json
+.DS_Store

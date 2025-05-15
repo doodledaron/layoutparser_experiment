@@ -1,0 +1,20 @@
+Detectron2 Evaluation Summary
+=============================
+
+Overall Performance (Bounding Box):
+- AP@[IoU=0.50:0.95]: 53.6%
+- AP@0.50: 66.6%
+- AP@0.75: 57.3%
+- AR@100: 0.0%
+
+Performance by Object Size:
+- Small:  AP = 0.0%, AR = 0.0%
+- Medium: AP = 0.0%, AR = 0.0%
+- Large:  AP = 53.8%, AR = 0.0%
+
+Per-Category AP:
+- Text:   60.6%
+- Title:  39.5%
+- List:   48.0%
+- Table:  84.6%
+- Figure: 35.1%

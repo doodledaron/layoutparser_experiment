@@ -1,0 +1,15 @@
+Label distribution in: /Users/doodledaron/Documents/Freelances/Leon/layoutparser_experiment/datasets/phase_1_text_experimental/train.json
+
+Text: 610 (75.31%)
+Title: 136 (16.79%)
+Figure: 15 (1.85%)
+Table: 23 (2.84%)
+List: 26 (3.21%)
+
+Label distribution in: /Users/doodledaron/Documents/Freelances/Leon/layoutparser_experiment/datasets/phase_1_text_experimental/val.json
+
+Title: 72 (17.65%)
+Text: 297 (72.79%)
+Table: 11 (2.70%)
+Figure: 20 (4.90%)
+List: 8 (1.96%)

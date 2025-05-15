@@ -11,3 +11,5 @@
 /inference_present
 model_final.pth
 api_keys.txt
+Phase_1_Text_Experiment
+last_checkpoint.pth

@@ -1,14 +1,3 @@
-{
-    "bbox": {
-        "AP": 0.0061,
-        "AP50": 0.0304,
-        "AP75": 0.0,
-        "APs": "NaN",
-        "APm": 0.0,
-        "APl": 0.0061,
-        "AP-Figure": 0.0,
-        "AP-Table": 0.0243,
-        "AP-Text": 0.0,
-        "AP-Title": 0.0
-    }
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:72075445151cf03b69a1d3080e284bcbc57b34188c2de692a5a9a3a02d2f0eac
+size 257

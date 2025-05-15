@@ -1,0 +1,53 @@
+import os
+import torch
+import json
+from datetime import datetime
+from detectron2.config import get_cfg
+from detectron2 import model_zoo
+from detectron2.modeling import build_model
+from detectron2.checkpoint import DetectionCheckpointer
+from detectron2.evaluation import COCOEvaluator, inference_on_dataset
+from detectron2.data import build_detection_test_loader
+
+# --- Setup config ---
+cfg = get_cfg()
+cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
+cfg.DATASETS.TEST = ("val_phase_1_minimal_v2_remapped",)
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = 4
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
+cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+cfg.MODEL.WEIGHTS = "./training_results/training3_output_gpu_optimized_1/model_final.pth"
+
+# --- Build model ---
+model = build_model(cfg)
+DetectionCheckpointer(model).load(cfg.MODEL.WEIGHTS)
+
+# --- Setup evaluator and loader ---
+evaluator = COCOEvaluator("val_phase_1_minimal_v2_remapped", output_dir="/workspace/training_results/training3_output_gpu_optimized_1")
+val_loader = build_detection_test_loader(cfg, "val_phase_1_minimal_v2_remapped")
+
+# --- Evaluate and capture results ---
+results = inference_on_dataset(model, val_loader, evaluator)
+
+# --- Save full results to JSON ---
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+save_path = f"/workspace/training_results/training3_output_gpu_optimized_1/full_eval_metrics_{timestamp}.json"
+os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+# Convert all values to standard JSON serializable types
+def serialize_results(data):
+    if isinstance(data, dict):
+        return {k: serialize_results(v) for k, v in data.items()}
+    elif isinstance(data, (list, tuple)):
+        return [serialize_results(v) for v in data]
+    elif isinstance(data, torch.Tensor):
+        return data.tolist()
+    elif isinstance(data, float):
+        return round(data, 4)
+    else:
+        return data
+
+with open(save_path, "w") as f:
+    json.dump(serialize_results(results), f, indent=4)
+
+print(f"📦 Full evaluation metrics saved to: {save_path}")

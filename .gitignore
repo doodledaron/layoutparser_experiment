@@ -5,3 +5,9 @@
 /research paper
 /datasets/DocLayNet/images
 .DS_Store
+/DocLayNet
+/datasets
+/pretrained_models
+/inference_present
+model_final.pth
+api_keys.txt

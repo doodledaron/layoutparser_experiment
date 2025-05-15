@@ -1,0 +1,52 @@
+# code to visualize metrics from detectron2 training
+
+import json
+import matplotlib.pyplot as plt
+import os
+
+metrics_path = "/Users/doodledaron/Documents/Freelances/Leon/layoutparser_experiment/training_results/training3_output_phase_1_minimal_detectron_ready/metrics.json"
+output_dir = "/Users/doodledaron/Documents/Freelances/Leon/layoutparser_experiment/training_results/training3_output_phase_1_minimal_detectron_ready/visualizations"
+os.makedirs(output_dir, exist_ok=True)
+
+# Read metrics
+iterations = []
+total_loss = []
+cls_accuracy = []
+fg_cls_accuracy = []
+
+with open(metrics_path, "r") as f:
+    for line in f:
+        try:
+            data = json.loads(line)
+            if "iteration" in data and "total_loss" in data:
+                iterations.append(data["iteration"])
+                total_loss.append(data["total_loss"])
+                cls_accuracy.append(data.get("fast_rcnn/cls_accuracy", None))
+                fg_cls_accuracy.append(data.get("fast_rcnn/fg_cls_accuracy", None))
+        except Exception:
+            continue
+
+# Plot total loss
+plt.figure(figsize=(10, 5))
+plt.plot(iterations, total_loss, label="Total Loss")
+plt.xlabel("Iteration")
+plt.ylabel("Loss")
+plt.title("Training Loss Curve")
+plt.legend()
+plt.tight_layout()
+plt.savefig(os.path.join(output_dir, "training_loss_curve.png"))
+plt.close()
+
+# Plot classification accuracy
+plt.figure(figsize=(10, 5))
+plt.plot(iterations, cls_accuracy, label="Classification Accuracy")
+plt.plot(iterations, fg_cls_accuracy, label="Foreground Class Accuracy")
+plt.xlabel("Iteration")
+plt.ylabel("Accuracy")
+plt.title("Training Accuracy Curves")
+plt.legend()
+plt.tight_layout()
+plt.savefig(os.path.join(output_dir, "training_accuracy_curve.png"))
+plt.close()
+
+print("Saved plots as training_loss_curve.png and training_accuracy_curve.png in", output_dir)

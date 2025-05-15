@@ -1,0 +1,84 @@
+#%%
+# 1) Imports & Base Config
+from detectron2.config import get_cfg
+from detectron2 import model_zoo
+import os
+
+cfg = get_cfg()
+cfg.merge_from_file(
+    model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")
+)
+
+# Datasets
+cfg.DATASETS.TRAIN = ("train_phase_1_minimal_v2_remapped",)
+cfg.DATASETS.TEST  = ("val_phase_1_minimal_v2_remapped",)
+
+# Pretrained weights & classes
+cfg.MODEL.WEIGHTS = "/workspace/layoutparser/pretrained_models/model_final.pth"  # PubLayNet checkpoint
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = 4
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.8  # for eval only
+
+# Device
+cfg.MODEL.DEVICE = "cuda"  # or "cpu" if no GPU
+
+#%%
+# 2) Imbalance sampler & backbone freezing
+cfg.DATALOADER.SAMPLER_TRAIN    = "RepeatFactorTrainingSampler"
+cfg.DATALOADER.REPEAT_THRESHOLD = 0.2   # oversample images with rare classes
+
+cfg.MODEL.BACKBONE.FREEZE_AT = 3  # freeze stem + res2 & res3
+#%%
+# 3) Anchor generator tweaks (wide/tall boxes)
+cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[32], [64], [128], [256], [512]]
+cfg.MODEL.ANCHOR_GENERATOR.ASPECT_RATIOS = [[0.2, 0.5, 1.0, 2.0, 5.0]]
+#%%
+# 4) Solver & LR schedule
+cfg.SOLVER.IMS_PER_BATCH = 4
+cfg.SOLVER.BASE_LR       = 0.00025
+cfg.SOLVER.MAX_ITER      = 1000  
+cfg.SOLVER.STEPS         = (600, 800)
+cfg.SOLVER.GAMMA         = 0.1
+cfg.SOLVER.WARMUP_ITERS  = 100
+cfg.SOLVER.WARMUP_METHOD = "linear"
+cfg.SOLVER.LOG_PERIOD    = 50
+
+cfg.DATALOADER.NUM_WORKERS = 4  # tune to your CPU cores
+#%%
+# 5) Augmented Trainer
+from detectron2.engine import DefaultTrainer, HookBase
+from detectron2.data import DatasetMapper, build_detection_train_loader
+import detectron2.data.transforms as T
+from tqdm import tqdm
+
+class AugmentedTrainer(DefaultTrainer):
+    @classmethod
+    def build_train_loader(cls, cfg):
+        aug = [
+            T.RandomRotation(angle=[-3, 3]),
+            T.RandomBrightness(0.8, 1.2),
+            T.RandomContrast(0.8, 1.2),
+            T.RandomSaturation(0.8, 1.2),
+            T.RandomLighting(0.2),
+        ]
+        mapper = DatasetMapper(cfg, is_train=True, augmentations=aug)
+        return build_detection_train_loader(cfg, mapper=mapper)
+
+class TQDMWithLossHook(HookBase):
+    def before_train(self):
+        self.pbar = tqdm(total=self.trainer.max_iter, desc="Train Config 1", unit="it")
+    def after_step(self):
+        loss = self.trainer.storage.latest().get("total_loss", 0)
+        if isinstance(loss, (tuple, list)): loss = loss[0]
+        self.pbar.set_postfix(loss=float(loss))
+        self.pbar.update(1)
+    def after_train(self):
+        self.pbar.close()
+#%%
+# 6) Launch training
+cfg.OUTPUT_DIR = "/workspace/layoutparser/training_results/config1_balanced_finetune"
+os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+
+trainer = AugmentedTrainer(cfg)
+trainer.register_hooks([TQDMWithLossHook()])
+trainer.resume_or_load(resume=False)
+trainer.train()
